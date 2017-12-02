@@ -1,0 +1,17 @@
+.nm-city,.nm-dnum{
+    padding: 0;
+    margin: 0;
+    max-height: 230px;
+    overflow: auto;
+    >li{
+        display: block;
+        border-bottom: 1px solid #ffffff;
+        padding: 8px 20px;
+        background: #eee;
+        &:hover{
+            cursor: pointer;
+            background:darken(#eee,8%) ;
+
+        }
+    }
+}
