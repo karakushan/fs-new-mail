@@ -41,6 +41,12 @@ if ( class_exists( 'FS_New_Mail' ) ) {
 function fs_nm_enqueue_script() {
 	wp_enqueue_style( 'fs-new-mail', plugin_dir_url( __FILE__ ) . 'assets/fs-new-mail.css' );
 	wp_enqueue_script( 'fs-new-mail', plugin_dir_url( __FILE__ ) . 'assets/fs-new-mail.js', array( 'jquery' ), null, true );
+	$translation_array = array(
+		'pochtomatId' => fs_option( 'nm_pochtomat' ),
+		'warehouseId' => fs_option( 'nm_warehouse' ),
+
+	);
+	wp_localize_script( 'fs-new-mail', 'fsNmOptions', $translation_array );
 }
 
 add_action( 'wp_enqueue_scripts', 'fs_nm_enqueue_script' );
@@ -62,6 +68,20 @@ function fs_nm_plugin_settings( $settings ) {
 				'name'  => 'nm_api_key',
 				'label' => 'API ключ <span><a href="https://devcenter.novaposhta.ua/blog/%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-api-%D0%BA%D0%BB%D1%8E%D1%87%D0%B0" target="_blank">получение ключа</a></span>',
 				'value' => fs_option( 'nm_api_key' )
+			),
+			array(
+				'type'     => 'del_methods',
+				'name'     => 'nm_warehouse',
+				'label'    => 'Способ доставки в отделение Новой Почты',
+				'value'    => fs_option( 'nm_warehouse' ),
+				'selected' => fs_option( 'nm_warehouse' )
+			),
+			array(
+				'type'     => 'del_methods',
+				'name'     => 'nm_pochtomat',
+				'label'    => 'Способ доставки в почтоматы Приватбанка',
+				'value'    => fs_option( 'nm_pochtomat' ),
+				'selected' => fs_option( 'nm_pochtomat' )
 			),
 		)
 	);

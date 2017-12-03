@@ -141,29 +141,65 @@ class FS_New_Mail {
 	 * метод-колбек для ajax запроса по получения отделений в городе
 	 */
 	public function ajax_get_warehouses() {
-		$query      = [
+
+		$query = [
 			"modelName"        => "AddressGeneral",
 			"calledMethod"     => "getWarehouses",
 			"methodProperties" => [
-				"CityName" => sanitize_text_field($_POST['id']),
+				"CityName" => sanitize_text_field( $_POST['id'] ),
 			]
 		];
 
+
+// Обновляем типы отделений
+		if ( get_option( 'fs_nm_update_date' ) != date( 'd-m-Y' ) ) {
+			$query_wh_types = [
+				"modelName"    => "AddressGeneral",
+				"calledMethod" => "getWarehouseTypes"
+			];
+			$wh_types       = $this->send_query( $query_wh_types );
+			$pochtomats     = array();
+			$warhouses      = array();
+			if ( ! empty( $wh_types ) ) {
+				foreach ( $wh_types as $wh_type ) {
+					if ( $wh_type->Description == 'Поштомат ПриватБанку' || $wh_type->Description == 'Поштомат' ) {
+						$pochtomats[] = $wh_type->Ref;
+					} elseif ( $wh_type->Description == 'Поштове відділення' || $wh_type->Description == 'Вантажне відділення' ) {
+						$warhouses[] = $wh_type->Ref;
+					}
+				}
+			}
+			if ( ! empty( $pochtomats ) ) {
+				update_option( 'fs_nm_pochtomats', $pochtomats );
+			}
+			if ( ! empty( $warhouses ) ) {
+				update_option( 'fs_nm_warhouses', $warhouses );
+			}
+			update_option( 'fs_nm_update_date', date( 'd-m-Y' ) );
+		}
+
+		$pochtomats = get_option( 'fs_nm_pochtomats' );
+		$warhouses  = get_option( 'fs_nm_warhouses' );
 		$response   = $this->send_query( $query );
 		$droppdown  = '';
-		if ( ! empty( $response ) ) {
+		if ( count( $response ) ) {
+			foreach ( $response as $city ) {
 
-			if ( count( $response ) ) {
-				foreach ( $response as $city ) {
-					$droppdown .= '<li data-value="' . esc_html($city->Description) . '">' . esc_html($city->Description) . '</li>';
+				if ( in_array( $city->TypeOfWarehouse, $warhouses ) && $_POST['type'] == fs_option( 'nm_warehouse' ) ) {
+					$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
+					continue;
 				}
-			} else {
-				$droppdown .= '<li>Не знайдено відділень у  вашому місті.</li>';
+				if ( in_array( $city->TypeOfWarehouse, $pochtomats ) && $_POST['type'] == fs_option( 'nm_pochtomat' ) ) {
+					$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
+					continue;
+				}
 			}
-
-		} else {
-			$droppdown .= '<li>Не знайдено відділень у  вашому місті.</li>';
 		}
+
+		if ( empty( $droppdown ) ) {
+			$droppdown = '<li>Не знайдено відділень у  вашому місті.</li>';
+		}
+
 		echo $droppdown;
 		exit();
 	}
