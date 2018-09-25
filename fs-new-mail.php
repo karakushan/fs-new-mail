@@ -70,18 +70,32 @@ function fs_nm_plugin_settings( $settings ) {
 				'value' => fs_option( 'nm_api_key' )
 			),
 			array(
-				'type'     => 'del_methods',
+				'type'     => 'dropdown_categories',
+				'taxonomy' => 'fs-delivery-methods',
 				'name'     => 'nm_warehouse',
 				'label'    => 'Способ доставки в отделение Новой Почты',
 				'value'    => fs_option( 'nm_warehouse' ),
 				'selected' => fs_option( 'nm_warehouse' )
 			),
 			array(
-				'type'     => 'del_methods',
+				'type'     => 'dropdown_categories',
+				'taxonomy' => 'fs-delivery-methods',
 				'name'     => 'nm_pochtomat',
 				'label'    => 'Способ доставки в почтоматы Приватбанка',
 				'value'    => fs_option( 'nm_pochtomat' ),
 				'selected' => fs_option( 'nm_pochtomat' )
+			),array(
+				'type'     => 'dropdown_categories',
+				'taxonomy' => 'fs-delivery-methods',
+				'name'     => 'nm_pochtomat',
+				'label'    => 'Способ доставки в почтоматы Приватбанка',
+				'value'    => fs_option( 'nm_pochtomat' ),
+				'selected' => fs_option( 'nm_pochtomat' )
+			),array(
+				'type'     => 'checkbox',
+				'name'     => 'fs_nm_show_all',
+				'label'    => 'Не разделять почтоматы и отделения',
+				'value'    => fs_option( 'fs_nm_show_all' ),
 			),
 		)
 	);

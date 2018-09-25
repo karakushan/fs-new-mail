@@ -185,14 +185,19 @@ class FS_New_Mail {
 		if ( count( $response ) ) {
 			foreach ( $response as $city ) {
 
-				if ( in_array( $city->TypeOfWarehouse, $warhouses ) && $_POST['type'] == fs_option( 'nm_warehouse' ) ) {
+				if (fs_option('fs_nm_show_all')){ 
 					$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
-					continue;
+				}else{
+					if ( in_array( $city->TypeOfWarehouse, $warhouses ) && $_POST['type'] == fs_option( 'nm_warehouse' ) ) {
+						$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
+						continue;
+					}
+					if ( in_array( $city->TypeOfWarehouse, $pochtomats ) && $_POST['type'] == fs_option( 'nm_pochtomat' ) ) {
+						$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
+						continue;
+					}
 				}
-				if ( in_array( $city->TypeOfWarehouse, $pochtomats ) && $_POST['type'] == fs_option( 'nm_pochtomat' ) ) {
-					$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
-					continue;
-				}
+
 			}
 		}
 
