@@ -55,17 +55,20 @@ class FS_New_Mail {
 		/**
 		 * Ajax запрос для получения городов Новой Почты.
 		 */
-		add_action( 'wp_ajax_fs_get_city', array( $this, 'ajax_nm_get_city' ) );
-		add_action( 'wp_ajax_nopriv_fs_get_city', array( $this, 'ajax_nm_get_city' ) );
+		add_action( 'wp_ajax_fs_get_city', array( $this, 'fs_get_city' ) );
+		add_action( 'wp_ajax_nopriv_fs_get_city', array( $this, 'fs_get_city' ) );
 
 		/**
 		 * Ajax запрос для получения отделений Новой Почты.
 		 */
-		add_action( 'wp_ajax_fs_get_warehouses', array( $this, 'ajax_get_warehouses' ) );
-		add_action( 'wp_ajax_nopriv_fs_get_warehouses', array( $this, 'ajax_get_warehouses' ) );
+		add_action( 'wp_ajax_fs_get_warehouses', array( $this, 'fs_get_warehouses' ) );
+		add_action( 'wp_ajax_nopriv_fs_get_warehouses', array( $this, 'fs_get_warehouses' ) );
+
+		// Получаем ID города по переданому названию
+		add_action( 'wp_ajax_fs_nm_city_code', array( $this, 'fs_nm_city_code' ) );
+		add_action( 'wp_ajax_nopriv_fs_nm_city_code', array( $this, 'fs_nm_city_code' ) );
 
 	}
-
 
 	/**
 	 * отправляет запрос методом POST
@@ -105,107 +108,110 @@ class FS_New_Mail {
 		}
 	}
 
-	/**
-	 * метод-колбек для ajax запроса по получения городов
-	 */
-	public function ajax_nm_get_city() {
+	// Получаем ID города по переданому названию
+	function fs_nm_city_code() {
 		$query    = [
 			"modelName"        => "Address",
 			"calledMethod"     => "searchSettlements",
 			"methodProperties" => [
-				"CityName" => sanitize_text_field( $_POST['id'] ),
+				"CityName" => sanitize_text_field( $_POST['input'] ),
 			]
 		];
 		$response = $this->send_query( $query );
-		// если возникли ошибки выходим
-		if ( count( $response->errors ) ) {
-			echo '<li>не знайдено віділень Нової Пошти</li>';
-			exit();
-		}
-
-
-		$droppdown = '';
-		if ( $response[0]->TotalCount ) {
-			$addr = $response[0]->Addresses;
-			foreach ( $addr as $city ) {
-				$droppdown .= '<li data-value="' . $city->MainDescription . '">' . $city->MainDescription . '</li>';
+		/*print_r( $response[0]->TotalCount );
+		wp_die();*/
+		if ( ! empty( $response[0]->TotalCount ) && ! empty( $response[0]->Addresses ) ) {
+			$out = '<select name="select-from-nm-city" style="display: block;">';
+			$out .= '<option value="">' . esc_html__( 'Виберіть населений пункт', 'fs-new-mail' ) . '</option>';
+			foreach ( $response[0]->Addresses as $address ) {
+				$out .= '<option value="' . esc_attr( $address->DeliveryCity ) . '">' . esc_html( $address->Present ) . '</option>';
 			}
-		} else {
-			$droppdown .= '<li>не знайдено віділень Нової Пошти</li>';
+			$out .= '</select>';
+			wp_send_json_success( [ 'html' => $out ] );
 		}
-		echo $droppdown;
-		exit();
+
+		wp_send_json_error();
+	}
+
+
+	/**
+	 * метод-колбек для ajax запроса по получения городов
+	 * https://devcenter.novaposhta.ua/docs/services/556d7ccaa0fe4f08e8f7ce43/operations/58e5ebeceea27017bc851d67
+	 */
+	public function fs_get_city() {
+		$query    = [
+			"modelName"        => "Address",
+			"calledMethod"     => "searchSettlements",
+			"methodProperties" => [
+				"CityName" => sanitize_text_field( $_POST['cityName'] ),
+			]
+		];
+		$response = $this->send_query( $query );
+		/*print_r( $response );
+		wp_die();*/
+		if ( ! empty( $response[0]->Addresses ) ) {
+			$out = '<ul class="nm-city" data-fs-element="select-delivery-city">';
+			foreach ( $response[0]->Addresses as $address ) {
+				$out .= '<li data-name="' . esc_attr( $address->MainDescription ) . '" data-ref="' . esc_attr( $address->DeliveryCity ) . '">' . esc_html( $address->Present ) . '</li>';
+			}
+			$out .= '</ul>';
+			wp_send_json_success( array( 'html' => $out, 'response' => $response ) );
+		} else {
+			wp_send_json_error( array( 'msg' => __( 'не знайдено віділень Нової Пошти', 'fs-new-mail' ) ) );
+		}
 	}
 
 	/**
 	 * метод-колбек для ajax запроса по получения отделений в городе
+	 *
+	 * https://devcenter.novaposhta.ua/docs/services/556d7ccaa0fe4f08e8f7ce43/operations/556d8211a0fe4f08e8f7ce45
 	 */
-	public function ajax_get_warehouses() {
-
-		$query = [
+	public function fs_get_warehouses() {
+		$query    = [
 			"modelName"        => "AddressGeneral",
 			"calledMethod"     => "getWarehouses",
 			"methodProperties" => [
-				"CityName" => sanitize_text_field( $_POST['id'] ),
+				"CityName" => sanitize_text_field( $_POST['cityName'] ),
+//				"CityRef"  => sanitize_text_field( $_POST['ref'] )
+
 			]
 		];
+		$response = $this->send_query( $query );
 
-
-// Обновляем типы отделений
-		if ( get_option( 'fs_nm_update_date' ) != date( 'd-m-Y' ) ) {
-			$query_wh_types = [
-				"modelName"    => "AddressGeneral",
-				"calledMethod" => "getWarehouseTypes"
-			];
-			$wh_types       = $this->send_query( $query_wh_types );
-			$pochtomats     = array();
-			$warhouses      = array();
-			if ( ! empty( $wh_types ) ) {
-				foreach ( $wh_types as $wh_type ) {
-					if ( $wh_type->Description == 'Поштомат ПриватБанку' || $wh_type->Description == 'Поштомат' ) {
-						$pochtomats[] = $wh_type->Ref;
-					} elseif ( $wh_type->Description == 'Поштове відділення' || $wh_type->Description == 'Вантажне відділення' ) {
-						$warhouses[] = $wh_type->Ref;
-					}
-				}
-			}
-			if ( ! empty( $pochtomats ) ) {
-				update_option( 'fs_nm_pochtomats', $pochtomats );
-			}
-			if ( ! empty( $warhouses ) ) {
-				update_option( 'fs_nm_warhouses', $warhouses );
-			}
-			update_option( 'fs_nm_update_date', date( 'd-m-Y' ) );
-		}
-
-		$pochtomats = get_option( 'fs_nm_pochtomats' );
-		$warhouses  = get_option( 'fs_nm_warhouses' );
-		$response   = $this->send_query( $query );
-		$droppdown  = '';
-		if ( count( $response ) ) {
-			foreach ( $response as $city ) {
-
-				if (fs_option('fs_nm_show_all')){ 
-					$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
-				}else{
-					if ( in_array( $city->TypeOfWarehouse, $warhouses ) && $_POST['type'] == fs_option( 'nm_warehouse' ) ) {
-						$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
-						continue;
-					}
-					if ( in_array( $city->TypeOfWarehouse, $pochtomats ) && $_POST['type'] == fs_option( 'nm_pochtomat' ) ) {
-						$droppdown .= '<li data-value="' . esc_html( $city->Description ) . '">' . esc_html( $city->Description ) . '</li>';
-						continue;
-					}
-				}
-
+		$delivery_cost = 0;
+		if ( fs_option( 'fs_nm_from_city_id' ) ) {
+			$response_cost_delivery = $this->send_query( array(
+				"modelName"        => "InternetDocument",
+				"calledMethod"     => "getDocumentPrice",
+				"methodProperties" => [
+					"CitySender"    => sanitize_text_field( fs_option( 'fs_nm_from_city_id' ) ),
+					"CityRecipient" => sanitize_text_field( $_POST['ref'] ),
+					"Weight"        => 2
+				]
+			) );
+			if ( ! empty( $response_cost_delivery[0]->CostWarehouseWarehouse ) ) {
+				$delivery_cost = floatval( $response_cost_delivery[0]->CostWarehouseWarehouse );
 			}
 		}
 
-		if ( empty( $droppdown ) ) {
-			$droppdown = '<li>Не знайдено відділень у  вашому місті.</li>';
-		}
+		if ( ! empty( $response ) ) {
+			$out = '<ul class="nm-city" data-fs-element="select-warehouse">';
+			foreach ( $response as $warehouse ) {
+				$out .= '<li data-ref="' . esc_attr( $warehouse->Ref ) . '">' . esc_html( $warehouse->Description ) . '</li>';
+			}
+			$out .= '</li>';
 
-		echo $droppdown;
-		exit();
+			wp_send_json_success( array(
+				'count'        => count( $response ),
+				'first'        => esc_html( $response[0]->Description ),
+				'html'         => $out,
+				'response'     => $response,
+				'deliveryCost' => sprintf( '%s <span>%s</span>', apply_filters( 'fs_price_format', $delivery_cost ), fs_currency() ),
+				'totalAmount'  => sprintf( '%s <span>%s</span>', apply_filters( 'fs_price_format', fs_get_total_amount( $delivery_cost ) ), fs_currency() )
+			) );
+		}
+		wp_send_json_error( array(
+			'msg' => __( 'Не знайдено відділень, виберіть найближче до вас місто' )
+		) );
 	}
 }

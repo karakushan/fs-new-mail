@@ -14,37 +14,31 @@
     $(document).on('keypress keyup click', '[name="fs_city"]', function () {
 
         var el = $(this);
-        var id = $(this).val();
+        var cityName = $(this).val();
         var delMethod = $("[name='fs_delivery_methods']").val();
 
-        if (id.length > 1 && checkDelivery(delMethod)) {
+        if (checkDelivery(delMethod)) {
             $.ajax({
-                url: FastShopData.ajaxurl,
+                url: fShop.ajaxurl,
                 type: 'POST',
                 data: {
                     action: 'fs_get_city',
-                    'id': id
+                    'cityName': cityName
                 },
                 beforeSend: function () {
 
                 }
-            }).done(function (data) {
-                if (data.length) {
-                    $("#nm-city").fadeIn();
-                    if (el.next().hasClass('nm-city')) {
-                        el.next().html(data);
-                    }
-
-                    if (el.next().hasClass('nm-city') == false) {
-                        el.after("<ul class=\"nm-city\" id=\"nm-city\">" + data + "</ul>");
-                    }
-
+            }).done(function (res) {
+                console.log(res);
+                if (res.success) {
+                    el.parent().find('[data-fs-element="select-delivery-city"]').remove();
+                    el.parent().find('.errors').remove();
+                    el.parent().append(res.data.html);
                 } else {
-                    if (el.next().hasClass('nm-city')) {
-                        el.next().html("<li>не знайдено відділень</li>");
-                    } else {
-                        el.after("<ul class=\"nm-city\" id=\"nm-city\"><li>не знайдено відділень</li></ul>");
-                    }
+                    el.parent().find('[data-fs-element="select-delivery-city"]').remove();
+                    el.parent().find('.errors').remove();
+                    el.parent().append('<p class="errors text-danger">' + res.data.msg + '</p>');
+                    $("[name=\"fs_delivery_number\"]").val("");
                 }
 
             })
@@ -55,13 +49,35 @@
 
 
     //получение отделений города по клику на дропдовн с городами
-    $(document).on('click', '#nm-city li', function () {
-        var el = $(this);
-        var delMethod = $("[name='fs_delivery_methods']").val();
-        var city = el.data('value');
-        $('[name="fs_city"]').val(city)
-        $('#nm-city').fadeOut();
-        getWarehouses(city, delMethod);
+    $(document).on('click', '[data-fs-element="select-delivery-city"] li', function () {
+        let el = $(this);
+        $('[name="fs_city"]').val(el.text());
+        $('[data-fs-element="select-delivery-city"]').fadeOut();
+        $.ajax({
+            type: 'POST',
+            url: fShop.ajaxurl,
+            data: {
+                "action": "fs_get_warehouses",
+                "ref": el.data("ref"),
+                "cityName": el.data("name")
+            },
+            success: function (res) {
+                console.log(res);
+                let delNumEl = $("[name=\"fs_delivery_number\"]");
+                if (res.success) {
+                    delNumEl.parent().find('[data-fs-element="select-warehouse"]').remove();
+                    delNumEl.parent().find('.errors').remove();
+                    delNumEl.parent().append(res.data.html);
+                    $("[data-fs-element=\"delivery-cost\"]").html(res.data.deliveryCost);
+                    $("[data-fs-element=\"total-amount\"]").html(res.data.totalAmount);
+                } else {
+                    delNumEl.parent().find('[data-fs-element="select-warehouse"]').remove();
+                    delNumEl.parent().find('.errors').remove();
+                    delNumEl.parent().append('<p class="errors text-danger">' + res.data.msg + '</p>');
+                    delNumEl.val("");
+                }
+            }
+        });
     });
 
     // показываем отделения по измененнию способа доставки
@@ -76,7 +92,7 @@
             }
         } else {
             $("[name=\"fs_adress\"]").fadeIn();
-            $("#nm-dnum,#nm-city,[name=\"fs_delivery_number\"]").fadeOut();
+            $("#nm-dnum,#nm-city").fadeOut();
         }
     });
 
@@ -92,28 +108,25 @@
             beforeSend: function () {
             }
         }).done(function (data) {
+            console.log(data);
             var delNum = $("[name='fs_delivery_number']").first();
             if (delNum.next().hasClass('nm-dnum')) {
                 delNum.next().html(data);
             } else {
-                delNum.after("<ul class=\"nm-dnum\" id=\"nm-dnum\">" + data + "</ul>");
+                delNum.after("<ul class=\"nm-dnum\" data-fs-element=\"select-delivery-num\">" + data + "</ul>");
             }
             $("#nm-dnum").fadeIn();
-
-
         })
     }
 
-    $(document).on('click', '#nm-dnum li', function (event) {
-        $("[name='fs_delivery_number']").val($(this).data('value'));
+    // клик одному элементу списка отделений
+    $(document).on('click', '[data-fs-element="select-warehouse"] li', function (event) {
+        $("[name='fs_delivery_number']").val($(this).text());
         $(this).parent().fadeOut();
     });
+
+    // показываем список ранее скрытых отделений
     $(document).on('click', '[name="fs_delivery_number"]', function (event) {
-        if ($(this).next().hasClass('nm-dnum')) {
-            $(this).next().fadeIn();
-        }
-
+        $("[data-fs-element=\"select-warehouse\"]").fadeIn();
     });
-
-
 })(jQuery);

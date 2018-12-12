@@ -51,6 +51,12 @@ function fs_nm_enqueue_script() {
 
 add_action( 'wp_enqueue_scripts', 'fs_nm_enqueue_script' );
 
+function fs_nm_admin_script() {
+	wp_enqueue_script( 'fs-nm-admin', plugin_dir_url( __FILE__ ) . 'assets/fs-new-mail-admin.js', array( 'jquery' ), null, true );
+}
+
+add_action( 'admin_enqueue_scripts', 'fs_nm_admin_script' );
+
 
 /**
  * Создаём вкладку настроек плагина в F-Shop
@@ -84,19 +90,33 @@ function fs_nm_plugin_settings( $settings ) {
 				'label'    => 'Способ доставки в почтоматы Приватбанка',
 				'value'    => fs_option( 'nm_pochtomat' ),
 				'selected' => fs_option( 'nm_pochtomat' )
-			),array(
+			),
+			array(
 				'type'     => 'dropdown_categories',
 				'taxonomy' => 'fs-delivery-methods',
 				'name'     => 'nm_pochtomat',
 				'label'    => 'Способ доставки в почтоматы Приватбанка',
 				'value'    => fs_option( 'nm_pochtomat' ),
 				'selected' => fs_option( 'nm_pochtomat' )
-			),array(
-				'type'     => 'checkbox',
-				'name'     => 'fs_nm_show_all',
-				'label'    => 'Не разделять почтоматы и отделения',
-				'value'    => fs_option( 'fs_nm_show_all' ),
 			),
+			array(
+				'type'  => 'checkbox',
+				'name'  => 'fs_nm_show_all',
+				'label' => 'Не разделять почтоматы и отделения',
+				'value' => fs_option( 'fs_nm_show_all' ),
+			),
+			array(
+				'type'  => 'text',
+				'name'  => 'fs_nm_from_city',
+				'label' => __( 'Город отправки товара', 'fs-new-mail' ),
+				'value' => fs_option( 'fs_nm_from_city' ),
+			),
+			array(
+				'type'  => 'text',
+				'name'  => 'fs_nm_from_city_id',
+				'label' => __( 'Код города отправки товара', 'fs-new-mail' ),
+				'value' => fs_option( 'fs_nm_from_city_id' ),
+			)
 		)
 	);
 
