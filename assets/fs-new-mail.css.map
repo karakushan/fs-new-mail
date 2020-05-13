@@ -1,7 +1,1 @@
-{
-"version": 3,
-"mappings": "AAAA,kBAAiB;EACb,OAAO,EAAE,CAAC;EACV,MAAM,EAAE,CAAC;EACT,UAAU,EAAE,KAAK;EACjB,QAAQ,EAAE,IAAI;EACd,4BAAG;IACC,OAAO,EAAE,KAAK;IACd,aAAa,EAAE,iBAAiB;IAChC,OAAO,EAAE,QAAQ;IACjB,UAAU,EAAE,IAAI;IAChB,wCAAO;MACH,MAAM,EAAE,OAAO;MACf,UAAU,EAAC,OAAgB",
-"sources": ["fs-new-mail.scss"],
-"names": [],
-"file": "fs-new-mail.css"
-}
+{"version":3,"sourceRoot":"","sources":["fs-new-mail.scss"],"names":[],"mappings":"AAAA;EACI;EACA;EACA;EACA;;AACA;EACI;EACA;EACA;EACA;;AACA;EACI;EACA","file":"fs-new-mail.css"}

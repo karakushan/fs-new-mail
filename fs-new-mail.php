@@ -30,6 +30,18 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
+if ( ! is_plugin_active( 'f-shop/f-shop.php' ) ) {
+
+
+	add_action( 'admin_notices', function () {
+		echo '<div class="notice notice-error is-dismissible">
+          <p>Для работы плагина "F-SHOP Новая Почта" необходим плагин F-SHOP. Если плагин установлен - активируйте его, иначе скачайте его по <a href="https://f-shop.top/" target="_blank">ссылке</a> и установите.</p>
+         </div>';
+	} );
+
+	return;
+}
+
 require_once "inc/class-fs-new-mail.php";
 if ( class_exists( 'FS_New_Mail' ) ) {
 	new FS_New_Mail();
