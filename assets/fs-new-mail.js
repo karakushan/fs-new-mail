@@ -13,9 +13,16 @@
     // получение городов Украины  по изменению ввода данных пользователем
     $(document).on('keypress keyup click', '[name="fs_city"]', function () {
 
-        var el = $(this);
-        var cityName = $(this).val();
-        var delMethod = $("[name='fs_delivery_methods']").val();
+        const el = $(this);
+        const cityName = $(this).val();
+        let delMethod = $("[name='fs_delivery_methods']").val();
+
+        // Если поле является чекбоксом или радиокнопкой
+        if ($("[name='fs_delivery_methods']").attr('type') == 'radio' || $("[name='fs_delivery_methods']").attr('type') == 'checkbox') {
+            delMethod = $("[name='fs_delivery_methods']:checked").val()
+        }
+        
+        console.log(delMethod);
 
         if (checkDelivery(delMethod)) {
             $.ajax({
