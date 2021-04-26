@@ -10,6 +10,14 @@
         }
     }
 
+    var delay = (function(){
+        var timer = 0;
+        return function(callback, ms){
+            clearTimeout (timer);
+            timer = setTimeout(callback, ms);
+        };
+    })();
+
     // получение городов Украины  по изменению ввода данных пользователем
     $(document).on('keypress keyup click', '[name="fs_city"]', function () {
 
@@ -17,38 +25,42 @@
         const cityName = $(this).val();
         let delMethod = $("[name='fs_delivery_methods']").val();
 
+        if (cityName.trim().length < 3) return;
+
         // Если поле является чекбоксом или радиокнопкой
         if ($("[name='fs_delivery_methods']").attr('type') == 'radio' || $("[name='fs_delivery_methods']").attr('type') == 'checkbox') {
             delMethod = $("[name='fs_delivery_methods']:checked").val()
         }
-        
-        console.log(delMethod);
 
         if (checkDelivery(delMethod)) {
-            $.ajax({
-                url: fShop.ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'fs_get_city',
-                    'cityName': cityName
-                },
-                beforeSend: function () {
+            delay(function(){
+                $.ajax({
+                    url: fShop.ajaxurl,
+                    type: 'POST',
+                    data: {
+                        action: 'fs_get_city',
+                        'cityName': cityName
+                    },
+                    beforeSend: function () {
 
-                }
-            }).done(function (res) {
-                console.log(res);
-                if (res.success) {
-                    el.parent().find('[data-fs-element="select-delivery-city"]').remove();
-                    el.parent().find('.errors').remove();
-                    el.parent().append(res.data.html);
-                } else {
-                    el.parent().find('[data-fs-element="select-delivery-city"]').remove();
-                    el.parent().find('.errors').remove();
-                    el.parent().append('<p class="errors text-danger">' + res.data.msg + '</p>');
-                    $("[name=\"fs_delivery_number\"]").val("");
-                }
+                    }
+                }).done(function (res) {
+                    console.log(res);
+                    if (res.success) {
+                        el.parent().find('[data-fs-element="select-delivery-city"]').remove();
+                        el.parent().find('.errors').remove();
+                        el.parent().append(res.data.html);
+                    } else {
+                        el.parent().find('[data-fs-element="select-delivery-city"]').remove();
+                        el.parent().find('.errors').remove();
+                        el.parent().append('<p class="errors text-danger">' + res.data.msg + '</p>');
+                        $("[name=\"fs_delivery_number\"]").val("");
+                    }
 
-            })
+                })
+            }, 1000 );
+
+
         }
 
 

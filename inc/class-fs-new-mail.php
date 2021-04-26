@@ -147,8 +147,7 @@ class FS_New_Mail {
 			]
 		];
 		$response = $this->send_query( $query );
-		/*print_r( $response );
-		wp_die();*/
+//	wp_send_json($response);
 		if ( ! empty( $response[0]->Addresses ) ) {
 			$out = '<ul class="nm-city" data-fs-element="select-delivery-city">';
 			foreach ( $response[0]->Addresses as $address ) {

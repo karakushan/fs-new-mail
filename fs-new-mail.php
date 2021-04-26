@@ -136,10 +136,3 @@ function fs_nm_plugin_settings( $settings ) {
 }
 
 add_filter( 'fs_plugin_settings', 'fs_nm_plugin_settings' );
-
-
-
-
-
-
-
