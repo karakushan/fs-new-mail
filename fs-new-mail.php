@@ -84,7 +84,7 @@ function fs_nm_plugin_settings( $settings ) {
 			array(
 				'type'  => 'text',
 				'name'  => 'nm_api_key',
-				'label' => 'API ключ <span><a href="https://devcenter.novaposhta.ua/blog/%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-api-%D0%BA%D0%BB%D1%8E%D1%87%D0%B0" target="_blank">получение ключа</a></span>',
+				'label' => 'API ключ <span><a href="https://new.novaposhta.ua/dashboard/settings/developers" target="_blank">получение ключа</a></span>',
 				'value' => fs_option( 'nm_api_key' )
 			),
 			array(

@@ -19,11 +19,13 @@
     })();
 
     // получение городов Украины  по изменению ввода данных пользователем
-    $(document).on('keypress keyup click', '[name="fs_city"]', function () {
+    $(document).on('input', '[name="fs_city"]', function () {
 
         const el = $(this);
         const cityName = $(this).val();
         let delMethod = $("[name='fs_delivery_methods']").val();
+
+        $('[name="fs_delivery_number"]').val('')
 
         if (cityName.trim().length < 3) return;
 
@@ -45,7 +47,6 @@
 
                     }
                 }).done(function (res) {
-                    console.log(res);
                     if (res.success) {
                         el.parent().find('[data-fs-element="select-delivery-city"]').remove();
                         el.parent().find('.errors').remove();
@@ -84,13 +85,13 @@
                 console.log(res);
                 let delNumEl = $("[name=\"fs_delivery_number\"]");
                 if (res.success) {
-                    delNumEl.parent().find('[data-fs-element="select-warehouse"]').remove();
+                    $('[data-fs-element="select-warehouse"]').remove();
                     delNumEl.parent().find('.errors').remove();
-                    delNumEl.parent().append(res.data.html);
+                    $('#fs-shipping-fields').append(res.data.html);
                     $("[data-fs-element=\"delivery-cost\"]").html(res.data.deliveryCost);
                     $("[data-fs-element=\"total-amount\"]").html(res.data.totalAmount);
                 } else {
-                    delNumEl.parent().find('[data-fs-element="select-warehouse"]').remove();
+                    $('[data-fs-element="select-warehouse"]').remove();
                     delNumEl.parent().find('.errors').remove();
                     delNumEl.parent().append('<p class="errors text-danger">' + res.data.msg + '</p>');
                     delNumEl.val("");
