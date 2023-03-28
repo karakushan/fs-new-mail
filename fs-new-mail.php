@@ -52,7 +52,8 @@ if ( class_exists( 'FS_New_Mail' ) ) {
  */
 function fs_nm_enqueue_script() {
 	wp_enqueue_style( 'fs-new-mail', plugin_dir_url( __FILE__ ) . 'assets/fs-new-mail.css' );
-	wp_enqueue_script( 'fs-new-mail', plugin_dir_url( __FILE__ ) . 'assets/fs-new-mail.js', array( 'jquery' ), null, true );
+
+	wp_enqueue_script( 'fs-new-mail', plugin_dir_url( __FILE__ ) . 'assets/js/fs-new-mail.js', array( 'jquery' ), null, true );
 	$translation_array = array(
 		'pochtomatId' => fs_option( 'nm_pochtomat' ),
 		'warehouseId' => fs_option( 'nm_warehouse' ),

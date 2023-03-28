@@ -15,4 +15,11 @@
   background: #dadada;
 }
 
+.fs-checkout-form .select2-container {
+  width: 100% !important;
+}
+.fs-checkout-form .select2-container .select2-selection {
+  width: 100% !important;
+}
+
 /*# sourceMappingURL=fs-new-mail.css.map */

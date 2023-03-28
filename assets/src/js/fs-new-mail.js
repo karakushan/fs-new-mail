@@ -10,17 +10,22 @@
         }
     }
 
-    var delay = (function(){
+    var delay = (function () {
         var timer = 0;
-        return function(callback, ms){
-            clearTimeout (timer);
+        return function (callback, ms) {
+            clearTimeout(timer);
             timer = setTimeout(callback, ms);
         };
     })();
 
-    // получение городов Украины  по изменению ввода данных пользователем
-    $(document).on('input', '[name="fs_city"]', function () {
+    $(document).on('click', '[name="fs_city"]', function (event) {
+        if ($('[data-fs-element="select-delivery-city"]').length > 0) {
+            $('[data-fs-element="select-delivery-city"]').fadeIn();
+        }
+    });
 
+    // получение городов Украины по изменению ввода данных пользователем
+    $(document).on('input', '[name="fs_city"]', function () {
         const el = $(this);
         const cityName = $(this).val();
         let delMethod = $("[name='fs_delivery_methods']").val();
@@ -35,7 +40,7 @@
         }
 
         if (checkDelivery(delMethod)) {
-            delay(function(){
+            delay(function () {
                 $.ajax({
                     url: fShop.ajaxurl,
                     type: 'POST',
@@ -44,13 +49,29 @@
                         'cityName': cityName
                     },
                     beforeSend: function () {
-
+                        $('[name="fs_city"]')
+                            .parent()
+                            .append('<img src="/wp-content/plugins/fs-new-mail/assets/img/preloader.svg" data-fs-element="select-city-loader" class="loader">')
                     }
                 }).done(function (res) {
                     if (res.success) {
+                        $('[data-fs-element="select-city-loader"]').remove()
                         el.parent().find('[data-fs-element="select-delivery-city"]').remove();
                         el.parent().find('.errors').remove();
-                        el.parent().append(res.data.html);
+                        let listCitiesHtml = '';
+                        if (res.data.cities.length > 0) {
+                            res.data.cities.forEach(function (city) {
+                                listCitiesHtml += '<li class="select-city-item" data-ref="' + city.ref + '">' + city.name + '</li>';
+                            });
+                        }
+                        if ($('[data-fs-element="select-delivery-city"]').length !== 0) {
+                            $('[data-fs-element="select-delivery-city"]').html(listCitiesHtml);
+                        } else {
+                            let citySelector = $(document).find('#fs_city');
+                            citySelector.after('<ul class="nm-city" data-fs-element="select-delivery-city">' +
+                                listCitiesHtml +
+                                '</ul>');
+                        }
                     } else {
                         el.parent().find('[data-fs-element="select-delivery-city"]').remove();
                         el.parent().find('.errors').remove();
@@ -59,7 +80,7 @@
                     }
 
                 })
-            }, 1000 );
+            }, 1000);
 
 
         }
@@ -72,22 +93,57 @@
     $(document).on('click', '[data-fs-element="select-delivery-city"] li', function () {
         let el = $(this);
         $('[name="fs_city"]').val(el.text());
+        $('[data-fs-element="select-warehouse"]').remove();
         $('[data-fs-element="select-delivery-city"]').fadeOut();
+        $('[name="fs_delivery_number"]').val('');
         $.ajax({
             type: 'POST',
             url: fShop.ajaxurl,
+            beforeSend: function () {
+                $(document).trigger('fs_before_get_warehouses', {
+                    "ref": el.data("ref"),
+                    "cityName": el.data("name")
+                });
+                $('[name="fs_delivery_number"]')
+                    .parent()
+                    .append('<img src="/wp-content/plugins/fs-new-mail/assets/img/preloader.svg" data-fs-element="select-warehouse-loader" class="loader">')
+            },
             data: {
                 "action": "fs_get_warehouses",
                 "ref": el.data("ref"),
                 "cityName": el.data("name")
             },
             success: function (res) {
-                console.log(res);
+                $(document).trigger('fs_after_get_warehouses', {
+                    "ref": el.data("ref"),
+                    "cityName": el.data("name"),
+                    ...res
+                });
+                $('[data-fs-element="select-warehouse-loader"]').remove();
                 let delNumEl = $("[name=\"fs_delivery_number\"]");
                 if (res.success) {
                     $('[data-fs-element="select-warehouse"]').remove();
                     delNumEl.parent().find('.errors').remove();
-                    $('#fs-shipping-fields').append(res.data.html);
+
+                    let warehousesHtml = '';
+                    if (res.data.warehouses.length > 0) {
+                        res.data.warehouses.forEach(function (warehouse) {
+                            warehousesHtml += '<li class="select-city-item" data-ref="' + warehouse.ref + '">' + warehouse.description + '</li>';
+                        });
+                    }
+
+                    let warehouseSelector = $('[name="fs_delivery_number"]');
+                    if ($('[data-fs-element="select-warehouse"]').length !== 0) {
+                        $('[data-fs-element="select-warehouse"]').html(warehousesHtml);
+                    } else {
+                        warehouseSelector.after('<ul class="nm-city" data-fs-element="select-warehouse">' +
+                            warehousesHtml +
+                            '</ul>');
+                    }
+
+                    if ($('#fs-shipping-fields').length > 0)
+                        $('#fs-shipping-fields').append(res.data.html);
+
                     $("[data-fs-element=\"delivery-cost\"]").html(res.data.deliveryCost);
                     $("[data-fs-element=\"total-amount\"]").html(res.data.totalAmount);
                 } else {

@@ -43,10 +43,11 @@ class FS_New_Mail {
 	/**
 	 * Initialize the class and set its properties.
 	 *
+	 * @param string $plugin_name The name of the plugin.
+	 * @param string $version The version of this plugin.
+	 *
 	 * @since    1.0.0
 	 *
-	 * @param      string $plugin_name The name of the plugin.
-	 * @param      string $version The version of this plugin.
 	 */
 	public function __construct() {
 		// присваиваем API ключ из настроек
@@ -98,9 +99,6 @@ class FS_New_Mail {
 		# отправляем запрос и получаем ответ от сервера
 		$result = file_get_contents( $this->api_host, 0, $context );
 		$res    = json_decode( $result );
-//		echo '<pre>';
-//		print_r( $res );
-//		echo '</pre>';
 		if ( $res->success ) {
 			return $res->data;
 		} else {
@@ -148,13 +146,16 @@ class FS_New_Mail {
 		];
 		$response = $this->send_query( $query );
 //	wp_send_json($response);
+
 		if ( ! empty( $response[0]->Addresses ) ) {
-			$out = '<ul class="nm-city" data-fs-element="select-delivery-city">';
-			foreach ( $response[0]->Addresses as $address ) {
-				$out .= '<li data-name="' . esc_attr( $address->MainDescription ) . '" data-ref="' . esc_attr( $address->DeliveryCity ) . '">' . esc_html( $address->Present ) . '</li>';
-			}
-			$out .= '</ul>';
-			wp_send_json_success( array( 'html' => $out, 'response' => $response ) );
+			$cities = $response[0]->Addresses ?? [];
+			$cities = array_map( function ( $item ) {
+				return [
+					'name' => $item->Present,
+					'ref'  => $item->DeliveryCity
+				];
+			}, $cities );
+			wp_send_json_success( compact( 'cities' ) );
 		} else {
 			wp_send_json_error( array( 'msg' => __( 'не знайдено віділень Нової Пошти', 'fs-new-mail' ) ) );
 		}
@@ -170,8 +171,8 @@ class FS_New_Mail {
 			"modelName"        => "AddressGeneral",
 			"calledMethod"     => "getWarehouses",
 			"methodProperties" => [
-				"CityName" => sanitize_text_field( $_POST['cityName'] ),
-//				"CityRef"  => sanitize_text_field( $_POST['ref'] )
+//				"CityName" => sanitize_text_field( $_POST['cityName'] ),
+				"CityRef"  => sanitize_text_field( $_POST['ref'] )
 
 			]
 		];
@@ -194,21 +195,20 @@ class FS_New_Mail {
 		}
 
 		if ( ! empty( $response ) ) {
-			$out = '<ul class="nm-city" data-fs-element="select-warehouse">';
-			foreach ( $response as $warehouse ) {
-				$out .= '<li data-ref="' . esc_attr( $warehouse->Ref ) . '">' . esc_html( $warehouse->Description ) . '</li>';
-			}
-			$out .= '</li>';
+			$warehouses = array_map( function ( $item ) {
+				return [
+					'description' => $item->Description,
+					'ref'         => $item->Ref
+				];
+			}, $response );
 
 			wp_send_json_success( array(
-				'count'        => count( $response ),
-				'first'        => esc_html( $response[0]->Description ),
-				'html'         => $out,
-				'response'     => $response,
+				'warehouses'   => $warehouses,
 				'deliveryCost' => sprintf( '%s <span>%s</span>', apply_filters( 'fs_price_format', $delivery_cost ), fs_currency() ),
 				'totalAmount'  => sprintf( '%s <span>%s</span>', apply_filters( 'fs_price_format', fs_get_total_amount( $delivery_cost ) ), fs_currency() )
 			) );
 		}
+
 		wp_send_json_error( array(
 			'msg' => __( 'Не знайдено відділень, виберіть найближче до вас місто' )
 		) );
